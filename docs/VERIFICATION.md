@@ -35,11 +35,13 @@ New API checks cover decimal amounts, email/priority/currency validation, explic
 
 The public [GitHub Actions workflow](https://github.com/vatsal2025/leadflow/actions/workflows/ci.yml) independently runs the SQLite and PostgreSQL suites, frontend checks, browser tests, dependency audits, and a full Compose smoke test from a clean Linux checkout.
 
-Vercel projects, domains, and private production settings have been prepared. Cloud deployment is not yet verified: Supabase provisioning is awaiting Vercel's marketplace account confirmation. See [deployment status](DEPLOYMENT.md). The video records a real isolated demo workspace and describes hosted deployment support without claiming that the cloud release is already live.
+The [public HTTPS deployment](https://leadflow-vatsal.vercel.app) is live on Vercel with Supabase PostgreSQL in Mumbai. Hosted browser verification passed readiness, unauthorized-data rejection, cross-origin rejection, real password login, Secure/HttpOnly/SameSite cookies, lead creation, typed activities, profile/status edits, reload persistence, standalone follow-ups, calendar/CSV downloads, archive/restore, pipeline accessibility, and logout. No browser exceptions or HTTP 5xx responses occurred during the walkthrough checks. Supabase's anonymous Data API returned no rows for leads, discussions, login windows, or migration versions; all four tables have RLS enabled. The temporary verification record was removed after testing. See [deployment details](DEPLOYMENT.md).
+
+The video records a real isolated local demo workspace. Its deployment explanation remains applicable to the now-live release; the recording does not show the hosted database or expose production access credentials.
 
 ## Scope of verification
 
 - Browser execution uses Chromium desktop/mobile emulation; Safari, Firefox, and physical phones were not separately tested.
-- Docker verification uses the documented local demonstration configuration. A public HTTPS deployment, external backup system, and domain have not been provisioned by this repository.
+- Docker verification uses the documented local demonstration configuration. The hosted release was separately checked over HTTPS; external backups and an always-on availability commitment have not been configured on the free database plan.
 - No formal load test or independent penetration test is claimed. Authentication is one shared workspace password; multi-tenant access control is outside the assessment's scope.
 - Security audit results reflect the advisory databases at validation time. Deployment operators must continue applying dependency and base-image updates.

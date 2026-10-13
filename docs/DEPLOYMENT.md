@@ -1,10 +1,12 @@
 # Hosted deployment
 
-LeadFlow uses two Vercel projects: `leadflow-crm` for Next.js and `leadflow-api` for FastAPI. The source roots are `frontend/` and `backend/`. Both are configured for Mumbai (`bom1`). The Python runtime is pinned to 3.13.
+LeadFlow uses two Vercel projects: `leadflow-crm` for Next.js and `leadflow-api` for FastAPI. The source roots are `frontend/` and `backend/`. Both are configured for Mumbai (`bom1`). Python is pinned to 3.13 and Node.js to the 24 LTS major.
 
 ## Current release state
 
-The Vercel projects and free `leadflow-vatsal.vercel.app` / `leadflow-api-vatsal.vercel.app` domains are provisioned. Production security variables are configured privately. A running cloud release still requires the Supabase database: Vercel currently returns `integration_terms_acceptance_required` for the account's marketplace installation. These reserved domains are not evidence of a completed deployment.
+**Live and verified on 13 October 2026:** [leadflow-vatsal.vercel.app](https://leadflow-vatsal.vercel.app), with API origin `https://leadflow-api-vatsal.vercel.app`. The free Supabase resource `leadflow-db` is provisioned in Mumbai and connected only to the API's production environment. Migration `0003` is applied, with eight fictional demo leads and fourteen discussions seeded. The application uses the transaction pooler over TLS; migrations used the session pooler.
+
+The public HTTPS app passed browser login, protected-data and origin checks, secure cookie checks, create/activity/status/profile persistence, follow-up scheduling, real calendar/CSV downloads, archive/restore, pipeline rendering, accessibility scanning, and logout. Anonymous Supabase Data API requests returned no rows from any of the four protected tables. Production secrets and the workspace password are excluded from Git and release assets.
 
 ## Database and release procedure
 
@@ -14,6 +16,8 @@ The Vercel projects and free `leadflow-vatsal.vercel.app` / `leadflow-api-vatsal
 4. Set API production variables: `DATABASE_URL`, `APP_ENV=production`, `SERVERLESS=true`, `COOKIE_SECURE=true`, `PUBLIC_ORIGIN=https://leadflow-vatsal.vercel.app`, `API_HOSTNAME=leadflow-api-vatsal.vercel.app`, a strong `APP_PASSWORD`, and a random `SESSION_SECRET` of at least 32 characters. Store secrets in Vercel's environment settings. Keep migrations' administrative credentials separate from any restricted application role used in production.
 5. Set frontend production `API_INTERNAL_URL=https://leadflow-api-vatsal.vercel.app` before the build. Deploy the API from `backend` with `vercel deploy --prod`, then deploy the frontend from `frontend` with the same command. Both directories contain their Vercel configuration. Local Vercel links are ignored by Git.
 6. Verify the actual HTTPS release: database readiness; unauthenticated API rejection; login and secure cookie attributes; create, discuss, edit, archive and restore; calendar/CSV downloads; reload persistence; and logout. Check the browser console and Vercel logs. Confirm the hosted database's anonymous REST access cannot read CRM tables. Only then describe the release as live.
+
+The backend's `pyproject.toml` contains only local lint/test settings and is excluded from the Vercel upload so the builder installs the pinned `requirements.txt`. If Windows denies access to a local cache while uploading, deploy a clean checkout of the same source; never upload `.env` files, test databases, or private tooling. Sensitive Vercel variables are omitted when exported with `env pull`; use a separately secured migration connection instead of treating those exported blanks as the deployed values.
 
 ## Serverless safeguards
 

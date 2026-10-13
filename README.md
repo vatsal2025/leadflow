@@ -4,6 +4,8 @@ A single-screen lead management workspace for tracking conversations and followi
 
 Includes a sales pipeline, editable contact profiles, priority and attention views, typed activity history, standalone follow-up scheduling, calendar downloads, filtered CSV export, and reversible archiving. The [product decisions](docs/PRODUCT_DECISIONS.md) explain the inspiration from Pipedrive, HubSpot, and Close, and define each feature's behavior.
 
+**Live app:** [leadflow-vatsal.vercel.app](https://leadflow-vatsal.vercel.app). Hosted on Vercel with a private Supabase PostgreSQL database in Mumbai. The workspace requires a password supplied privately by the owner. [Watch the 2:47 English walkthrough](https://github.com/vatsal2025/leadflow/releases/tag/v1.1.0).
+
 ![LeadFlow workspace](docs/screenshots/01-workspace.png)
 
 ## Run with Docker
