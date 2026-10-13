@@ -2,6 +2,8 @@
 
 A single-screen lead management workspace for tracking conversations and following through. Built with Next.js, React, FastAPI, SQLAlchemy, and PostgreSQL. SQLite provides a zero-service local setup.
 
+Includes a sales pipeline, editable contact profiles, priority and attention views, typed activity history, standalone follow-up scheduling, calendar downloads, filtered CSV export, and reversible archiving. The [product decisions](docs/PRODUCT_DECISIONS.md) explain the inspiration from Pipedrive, HubSpot, and Close, and define each feature's behavior.
+
 ![LeadFlow workspace](docs/screenshots/01-workspace.png)
 
 ## Run with Docker
@@ -73,12 +75,18 @@ To verify/run an optimized frontend, stop the frontend development server, then 
 
 ## Working flow
 
-1. **Add new lead**: name is required; company and phone are optional. A lead starts as **New**.
+1. **Add new lead**: name is required. Company, phone, email, source, and estimated deal value are optional; choose priority and currency. A lead starts as **New**.
 2. **Open a lead**: the dialog shows the most recent discussion first. Older history can be loaded without leaving the screen.
-3. **Save a discussion**: enter a note and optionally set a follow-up date/time. The list and workspace totals refresh immediately after the server confirms the transaction.
+3. **Save an activity**: choose Note, Call, Email, or Meeting, enter a discussion, and optionally set a follow-up date/time. The list and workspace totals refresh after the server confirms the transaction. Activity types record work; they do not send messages or place calls.
 4. **Update status**: choose New, Contacted, Qualified, Proposal Sent, Won, or Lost in the dialog. Changes persist immediately.
 5. **Follow through**: today's reminders stay at the top, overdue reminders are red and explicitly labelled, and **Mark complete** clears the current reminder without deleting historical notes.
-6. Search by name, filter by status, and filter by due/overdue reminders. Filters combine. List pages contain at most 25 leads.
+6. Search name, company, email, or source. Combine status, reminder, priority, attention, and visibility filters. List pages contain at most 25 leads.
+7. Switch to **Pipeline** for stage columns, each with its own pagination and complete matching count/value totals. Move leads with the stage selector. Estimated amounts remain separated by currency.
+8. Use **Needs attention**, **No next step**, or **Quiet 7+ days** to focus on open, active leads. The interface explains the conditions, including overdue follow-ups and the date of the last logged activity.
+9. Open **Lead details** to edit a contact or archive it. Use the Archived leads visibility filter to find and restore archived records; history is preserved.
+10. Use **Schedule follow-up** independently of a discussion. Download a 15-minute calendar event with **Calendar (.ics)**, or use **Export CSV** for all leads matching the current filters (maximum 10,000).
+
+![Sales pipeline](docs/screenshots/05-pipeline.png)
 
 ![Discussion timeline](docs/screenshots/02-timeline.png)
 
@@ -94,9 +102,12 @@ To verify/run an optimized frontend, stop the frontend development server, then 
 - Past follow-up dates are allowed for recording existing commitments and are marked overdue. Nonexistent local times during a spring daylight-saving transition are rejected. For a repeated local time in autumn, the browser Date conversion selects the earlier occurrence.
 - A discussion and its lead/reminder/version update commit in one database transaction. Stale versions receive `409 Conflict`; the UI refreshes details and preserves the draft for review and retry.
 - Lead and discussion creation use client-generated UUID request IDs. An unchanged retry does not create a duplicate, even if the initial response was lost. Reusing an ID with different content returns `409`.
-- Search is a case-insensitive literal name substring match; SQL wildcard characters are escaped. ASCII case folding is portable across SQLite/PostgreSQL; linguistic Unicode folding follows the database collation.
+- Search is a case-insensitive literal substring match across name, company, email, and source; SQL wildcard characters are escaped. ASCII case folding is portable across SQLite/PostgreSQL; linguistic Unicode folding follows the database collation.
 - Input is length-bounded and validated on the server. Discussion text is rendered as plain text. Drafts are held in browser memory and a close confirmation protects unsaved discussions; a page reload or expired session discards unsaved input.
-- Follow-ups are in-app reminders. The assignment does not request email, push notifications, or background delivery, so none are sent.
+- Follow-ups are in-app reminders with optional calendar file export. Calendar imports are manual and do not synchronize automatically; background email/push delivery is not configured.
+- Profile edits, archiving, pipeline moves, and reminder changes all require the current record version. Profile conflicts require explicit reload and review; discussion drafts survive conflicts for retry.
+- CSV exports use the same filters as list and pipeline views and include all matching pages. They quote cells and neutralize spreadsheet formulas. More than 10,000 matches returns a clear error instead of a partial export.
+- Estimated deal values use nonnegative decimals with two decimal places. Totals are grouped by currency; there is no conversion or predicted revenue. PostgreSQL is recommended for exact production financial storage and aggregation.
 
 ## Configuration
 
@@ -181,12 +192,14 @@ npm audit --audit-level=high
 
 | Endpoint | Behavior |
 | --- | --- |
-| `GET /api/leads` | Paginated leads, search/status/reminder filters, counts, timezone-aware ordering |
+| `GET /api/leads` | Paginated leads; search/status/reminder/priority/attention/archive filters; counts and totals by currency |
+| `GET /api/leads/export.csv` | All matching leads as UTF-8 CSV; maximum 10,000 |
 | `POST /api/leads` | Create lead (`201`); identical retried request (`200`) |
 | `GET /api/leads/{id}` | Lead detail and latest discussion |
-| `PATCH /api/leads/{id}` | Change status or reminder with `expected_version` |
+| `PATCH /api/leads/{id}` | Edit contact, opportunity, status, reminder, or archive state with `expected_version` |
 | `GET /api/leads/{id}/discussions` | Reverse-chronological, paginated discussion history |
-| `POST /api/leads/{id}/discussions` | Atomically save note and optional reminder (`201`) |
+| `POST /api/leads/{id}/discussions` | Atomically save typed activity and optional reminder (`201`) |
+| `GET /api/leads/{id}/reminder.ics` | Download current follow-up as a calendar event; `404` if none is scheduled |
 | `GET /api/auth/session` | Session and authentication-mode state |
 | `POST /api/auth/login`, `POST /api/auth/logout` | Shared workspace session |
 | `GET /api/health/live`, `GET /api/health/ready` | Process/database readiness |
