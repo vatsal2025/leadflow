@@ -214,8 +214,11 @@ test("standalone scheduling protects drafts and exports a real calendar event", 
     .getByLabel("Next follow-up date & time")
     .inputValue();
   expect(nextDate).toMatch(/T09:00$/);
-  page.once("dialog", (confirmation) => confirmation.dismiss());
   await dialog.getByRole("button", { name: "Close dialog" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Keep editing" })
+    .click();
   await expect(dialog).toBeVisible();
   await dialog
     .getByRole("button", { name: "Save follow-up", exact: true })

@@ -92,6 +92,10 @@ To verify/run an optimized frontend, stop the frontend development server, then 
 
 ![Discussion timeline](docs/screenshots/02-timeline.png)
 
+The lead dialog has one scrolling content area and an accessible confirmation for unsaved edits, with keyboard focus on **Keep editing** by default.
+
+![Unsaved changes confirmation](docs/screenshots/06-discard-confirmation.png)
+
 ![Add a new lead](docs/screenshots/03-add-lead.png)
 
 <img src="docs/screenshots/04-mobile.png" alt="LeadFlow on a mobile viewport" width="390" />

@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, CalendarPlus } from "lucide-react";
 import { api, ApiError, download, type Lead, message } from "@/lib/api";
 import { localToISO } from "@/lib/dates";
-import { ErrorNotice } from "./ui";
+import { ConfirmDiscard, ErrorNotice } from "./ui";
 
 function localInput(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
@@ -26,6 +26,8 @@ export function ReminderTools({
   const client = useQueryClient();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
+  const [baseline, setBaseline] = useState("");
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const save = useMutation({
     mutationFn: () =>
       api<Lead>(`/leads/${lead.id}`, {
@@ -55,8 +57,16 @@ export function ReminderTools({
     const date = new Date();
     date.setDate(date.getDate() + days);
     date.setHours(9, 0, 0, 0);
-    setValue(localInput(date));
-    onDirty(true);
+    updateValue(localInput(date));
+  }
+  function updateValue(next: string) {
+    setValue(next);
+    onDirty(next !== baseline);
+  }
+  function cancelScheduling() {
+    setOpen(false);
+    setConfirmDiscard(false);
+    onDirty(false);
   }
   return (
     <div className="reminder-tools">
@@ -65,25 +75,29 @@ export function ReminderTools({
           type="button"
           className="text-button"
           disabled={disabled}
+          aria-expanded={open}
+          aria-controls={open ? "reminder-form" : undefined}
           onClick={() => {
-            if (
-              open &&
-              value &&
-              !window.confirm("Discard the unsaved follow-up?")
-            )
-              return;
-            if (!open)
-              setValue(
-                lead.follow_up_at
-                  ? localInput(new Date(lead.follow_up_at))
-                  : "",
-              );
-            setOpen(!open);
-            onDirty(false);
+            if (open) {
+              if (value !== baseline) setConfirmDiscard(true);
+              else cancelScheduling();
+            } else {
+              const initial = lead.follow_up_at
+                ? localInput(new Date(lead.follow_up_at))
+                : "";
+              setValue(initial);
+              setBaseline(initial);
+              setOpen(true);
+              onDirty(false);
+            }
           }}
         >
           <CalendarPlus size={14} />
-          {lead.follow_up_at ? "Reschedule follow-up" : "Schedule follow-up"}
+          {open
+            ? "Cancel scheduling"
+            : lead.follow_up_at
+              ? "Reschedule follow-up"
+              : "Schedule follow-up"}
         </button>
         {lead.follow_up_at && (
           <button
@@ -104,6 +118,7 @@ export function ReminderTools({
       )}
       {open && (
         <form
+          id="reminder-form"
           className="reminder-form"
           onSubmit={(event) => {
             event.preventDefault();
@@ -117,8 +132,7 @@ export function ReminderTools({
             required
             value={value}
             onChange={(event) => {
-              setValue(event.target.value);
-              onDirty(true);
+              updateValue(event.target.value);
             }}
             disabled={disabled}
           />
@@ -152,6 +166,12 @@ export function ReminderTools({
       {(save.isError || calendar.isError) && (
         <ErrorNotice>{message(save.error || calendar.error)}</ErrorNotice>
       )}
+      <ConfirmDiscard
+        open={confirmDiscard}
+        description="The follow-up time you haven’t saved will be lost. Your current saved reminder will stay unchanged."
+        onCancel={() => setConfirmDiscard(false)}
+        onDiscard={cancelScheduling}
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowUpRight, X } from "lucide-react";
+import { ArrowUpRight, FilePenLine, X } from "lucide-react";
 import { useRef, type ReactNode } from "react";
 import type { Status } from "@/lib/api";
 
@@ -107,5 +107,68 @@ export function ErrorNotice({ children }: { children: ReactNode }) {
     <p className="error-notice" role="alert">
       {children}
     </p>
+  );
+}
+
+export function ConfirmDiscard({
+  open,
+  description,
+  onCancel,
+  onDiscard,
+}: {
+  open: boolean;
+  description: string;
+  onCancel: () => void;
+  onDiscard: () => void;
+}) {
+  const cancel = useRef<HTMLButtonElement>(null);
+  const returnFocus = useRef<HTMLElement | null>(null);
+  return (
+    <Dialog.Root
+      open={open}
+      onOpenChange={(value) => {
+        if (!value) onCancel();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Overlay className="dialog-overlay confirmation-overlay" />
+        <Dialog.Content
+          role="alertdialog"
+          className="dialog confirmation-dialog"
+          onInteractOutside={(event) => event.preventDefault()}
+          onEscapeKeyDown={(event) => event.stopPropagation()}
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            returnFocus.current = document.activeElement as HTMLElement;
+            cancel.current?.focus();
+          }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            if (returnFocus.current?.isConnected) returnFocus.current.focus();
+          }}
+        >
+          <div className="confirmation-body">
+            <span className="confirmation-icon" aria-hidden="true">
+              <FilePenLine size={24} />
+            </span>
+            <Dialog.Title>Discard unsaved changes?</Dialog.Title>
+            <Dialog.Description>{description}</Dialog.Description>
+          </div>
+          <div className="confirmation-actions">
+            <button
+              ref={cancel}
+              type="button"
+              className="button secondary"
+              onClick={onCancel}
+            >
+              Keep editing
+            </button>
+            <button type="button" className="button danger" onClick={onDiscard}>
+              Discard changes
+            </button>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

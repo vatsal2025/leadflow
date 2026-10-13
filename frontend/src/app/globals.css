@@ -112,16 +112,10 @@
   font-weight: 600;
 }
 .activity-panel {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  min-width: 0;
 }
 .details-panel {
-  overflow: auto;
-  min-height: 0;
-  flex: 1;
+  min-width: 0;
 }
 .profile-editor {
   padding: 22px 26px;
@@ -164,12 +158,8 @@
   color: #596d4d;
 }
 .reminder-tools {
-  padding: 10px 26px;
+  padding: 14px 26px;
   border-bottom: 1px solid #e5e9e3;
-  flex-shrink: 1;
-  max-height: 230px;
-  min-height: 40px;
-  overflow: auto;
 }
 .reminder-tool-buttons {
   display: flex;
@@ -1315,10 +1305,18 @@ h1 {
   background: #fafcf7;
 }
 .timeline-dialog {
-  max-width: 660px;
+  max-width: 720px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+.timeline-content {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #a9b9ad transparent;
 }
 .timeline-dialog .dialog-heading {
   padding-bottom: 16px;
@@ -1389,9 +1387,6 @@ h1 {
 }
 .timeline-body {
   padding: 21px 26px 12px;
-  overflow-y: auto;
-  min-height: 110px;
-  flex: 1;
 }
 .section-eyebrow {
   display: flex;
@@ -1487,9 +1482,60 @@ h1 {
   background: #fafcf7;
   border-top: 1px solid var(--line);
   padding: 17px 26px;
-  flex-shrink: 0;
-  max-height: 52dvh;
-  overflow: auto;
+}
+.confirmation-overlay {
+  z-index: 60;
+  background: #172c226b;
+  backdrop-filter: blur(2px);
+}
+.confirmation-dialog {
+  z-index: 70;
+  max-width: 430px;
+}
+.confirmation-body {
+  padding: 28px 26px 24px;
+}
+.confirmation-icon {
+  display: inline-flex;
+  padding: 12px;
+  border-radius: 13px;
+  background: #f5eee3;
+  color: #82632c;
+  margin-bottom: 18px;
+}
+.confirmation-body h2 {
+  font-size: 21px;
+  letter-spacing: -0.5px;
+  line-height: 1.3;
+}
+.confirmation-body p {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.confirmation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 18px 26px;
+  border-top: 1px solid var(--line);
+  background: #fafcf7;
+}
+.confirmation-actions .button {
+  flex: 1 1 auto;
+  min-height: 42px;
+  font-size: 12px;
+}
+.button.danger {
+  background: #a63e35;
+  color: white;
+  border: 1px solid #a63e35;
+}
+.button.danger:hover {
+  background: #8e3029;
+  border-color: #8e3029;
 }
 .composer label {
   font-size: 11px;

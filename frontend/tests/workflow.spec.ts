@@ -127,8 +127,11 @@ test("failed save preserves the draft, retry succeeds, and unsaved close require
   await expect(dialog.getByLabel("Add a discussion")).toHaveValue(
     "Keep this draft if the connection fails.",
   );
-  page.once("dialog", (confirmation) => confirmation.dismiss());
   await dialog.getByRole("button", { name: "Close dialog" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Keep editing" })
+    .click();
   await expect(dialog).toBeVisible();
   await page.unroute("**/api/leads/*/discussions");
   await dialog.getByRole("button", { name: "Save discussion" }).click();
