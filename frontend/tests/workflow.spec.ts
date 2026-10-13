@@ -110,6 +110,7 @@ test("failed save preserves the draft, retry succeeds, and unsaved close require
   page,
 }) => {
   await page.goto("/");
+  await page.getByRole("searchbox").fill("Ananya Rao");
   await page.getByRole("button", { name: "Open Ananya Rao" }).click();
   const dialog = page.getByRole("dialog");
   await dialog
@@ -141,6 +142,7 @@ test("stale edits show a conflict and preserve the discussion draft", async ({
   page,
 }) => {
   await page.goto("/");
+  await page.getByRole("searchbox").fill("Vikram Desai");
   await page.getByRole("button", { name: "Open Vikram Desai" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByLabel("Status", { exact: true })).toBeEnabled();

@@ -28,10 +28,24 @@ try {
     fullPage: false,
   });
   await page.getByRole("button", { name: "Close dialog" }).click();
+  await page.getByRole("button", { name: "Pipeline", exact: true }).click();
+  await page
+    .getByRole("region", { name: "Qualified stage", exact: true })
+    .getByRole("button", { name: "Open Aarav Mehta" })
+    .waitFor();
+  await page.screenshot({
+    path: path.join(output, "05-pipeline.png"),
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "List", exact: true }).click();
   await page.getByRole("button", { name: "Add new lead" }).click();
   await page.getByLabel("Full name").fill("Sofia Bennett");
   await page.getByLabel("Company").fill("Evergreen Advisory");
   await page.getByLabel("Phone number").fill("+91 98765 43210");
+  await page.getByLabel("Email address").fill("sofia@example.com");
+  await page.getByLabel("Lead source").fill("Client referral");
+  await page.getByLabel("Priority", { exact: true }).selectOption("High");
+  await page.getByLabel("Estimated deal value").fill("15000.00");
   await page.screenshot({
     path: path.join(output, "03-add-lead.png"),
     fullPage: false,
@@ -50,7 +64,7 @@ try {
     fullPage: true,
   });
   await mobile.close();
-  console.log(`Saved four application screenshots to ${output}`);
+  console.log(`Saved five application screenshots to ${output}`);
 } finally {
   await browser.close();
 }

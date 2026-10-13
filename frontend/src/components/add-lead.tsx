@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { ArrowRight, UserPlus } from "lucide-react";
 import { api, type Lead, message } from "@/lib/api";
 import { ErrorNotice, Modal } from "./ui";
+import { ContactFields, contactDraft, contactPayload } from "./contact-fields";
 
 export function AddLead({
   open,
@@ -16,17 +17,11 @@ export function AddLead({
   onSaved: (lead: Lead) => void;
 }) {
   const client = useQueryClient();
-  const [name, setName] = useState("");
-  const [company, setCompany] = useState("");
-  const [phone, setPhone] = useState("");
+  const [draft, setDraft] = useState(() => contactDraft());
   const request = useRef<{ fingerprint: string; id: string } | null>(null);
   const save = useMutation({
     mutationFn: () => {
-      const values = {
-        name: name.trim(),
-        company: company.trim() || null,
-        phone: phone.trim() || null,
-      };
+      const values = contactPayload(draft);
       const fingerprint = JSON.stringify(values);
       if (request.current?.fingerprint !== fingerprint)
         request.current = { fingerprint, id: crypto.randomUUID() };
@@ -60,45 +55,9 @@ export function AddLead({
             <UserPlus size={24} />
             <span>Every great relationship starts with a conversation.</span>
           </div>
-          <label htmlFor="lead-name">
-            Full name <span className="required">*</span>
-          </label>
-          <input
-            id="lead-name"
-            name="name"
-            autoComplete="name"
-            placeholder="e.g. Aarav Mehta"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            required
-            maxLength={120}
-            disabled={save.isPending}
-          />
-          <label htmlFor="lead-company">
-            Company <span className="optional">Optional</span>
-          </label>
-          <input
-            id="lead-company"
-            name="company"
-            autoComplete="organization"
-            placeholder="Where they work"
-            value={company}
-            onChange={(event) => setCompany(event.target.value)}
-            maxLength={160}
-            disabled={save.isPending}
-          />
-          <label htmlFor="lead-phone">
-            Phone number <span className="optional">Optional</span>
-          </label>
-          <input
-            id="lead-phone"
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            placeholder="e.g. +91 98765 43210"
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-            maxLength={40}
+          <ContactFields
+            draft={draft}
+            onChange={setDraft}
             disabled={save.isPending}
           />
           <p className="field-hint">
@@ -117,7 +76,7 @@ export function AddLead({
           </button>
           <button
             className="button primary"
-            disabled={save.isPending || !name.trim()}
+            disabled={save.isPending || !draft.name.trim()}
           >
             {save.isPending ? "Adding lead…" : "Add lead"}
             <ArrowRight size={16} />
