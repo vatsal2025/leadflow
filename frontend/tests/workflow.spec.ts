@@ -215,3 +215,34 @@ test("accessible workspace and dialogs, focus restoration, and no horizontal ove
 test("local timestamps reject invalid dates", () => {
   expect(() => localToISO("invalid")).toThrow("valid follow-up");
 });
+
+test("a shrinking result set leaves a path back from an empty page", async ({
+  page,
+}) => {
+  const response = await page.request.get("/api/leads");
+  const original = await response.json();
+  let shrunk = false;
+  await page.route("**/api/leads?*", async (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    const offset = Number(params.get("offset") || 0);
+    if (offset > 0) shrunk = true;
+    const total = shrunk ? 1 : 26;
+    await route.fulfill({
+      json: {
+        ...original,
+        total,
+        offset,
+        limit: 25,
+        items: offset > 0 ? [] : original.items.slice(0, 1),
+      },
+    });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Next page" }).click();
+  await expect(
+    page.getByRole("heading", { name: "This page has changed" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Back to first page" }).click();
+  await expect(page.locator(".lead-row")).toHaveCount(1);
+  await expect(page.getByText("Showing 1–1 of 1 leads")).toBeVisible();
+});

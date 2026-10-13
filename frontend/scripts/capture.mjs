@@ -25,7 +25,7 @@ try {
   await page.getByRole("dialog").locator(".note-card").first().waitFor();
   await page.screenshot({
     path: path.join(output, "02-timeline.png"),
-    fullPage: true,
+    fullPage: false,
   });
   await page.getByRole("button", { name: "Close dialog" }).click();
   await page.getByRole("button", { name: "Add new lead" }).click();
@@ -34,7 +34,7 @@ try {
   await page.getByLabel("Phone number").fill("+91 98765 43210");
   await page.screenshot({
     path: path.join(output, "03-add-lead.png"),
-    fullPage: true,
+    fullPage: false,
   });
   await context.close();
   const mobile = await browser.newContext({

@@ -3,6 +3,8 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const root = path.resolve(import.meta.dirname, "..");
+const envFile = path.resolve(root, "../.env");
+if (existsSync(envFile)) process.loadEnvFile(envFile);
 const standalone = path.join(root, ".next", "standalone");
 if (!existsSync(path.join(standalone, "server.js"))) {
   throw new Error("Production build is missing. Run npm run build first.");

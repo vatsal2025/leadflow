@@ -154,12 +154,13 @@ function LeadWorkspace({ authEnabled }: { authEnabled: boolean }) {
     return () => clearInterval(timer);
   }, []);
   useEffect(() => {
+    if (search === debounced) return;
     const timer = setTimeout(() => {
       setDebounced(search);
       setOffset(0);
     }, 250);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, debounced]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 4500);
@@ -459,20 +460,37 @@ function LeadWorkspace({ authEnabled }: { authEnabled: boolean }) {
                 {filtered ? <Search size={28} /> : <Users size={28} />}
               </div>
               <h3>
-                {filtered
-                  ? "No leads match just yet"
-                  : "Your next great connection starts here"}
+                {offset > 0
+                  ? "This page has changed"
+                  : filtered
+                    ? "No leads match just yet"
+                    : "Your next great connection starts here"}
               </h3>
               <p>
-                {filtered
-                  ? "Try a different name or clear your filters to see all leads."
-                  : "Add your first lead, log a conversation, and keep the next step in sight."}
+                {offset > 0
+                  ? "Some leads moved out of this view. Return to the first page to see your current leads."
+                  : filtered
+                    ? "Try a different name or clear your filters to see all leads."
+                    : "Add your first lead, log a conversation, and keep the next step in sight."}
               </p>
               <button
                 className="button primary"
-                onClick={filtered ? reset : () => setAdding(true)}
+                onClick={
+                  offset > 0
+                    ? () => {
+                        void client.invalidateQueries({ queryKey: ["leads"] });
+                        setOffset(0);
+                      }
+                    : filtered
+                      ? reset
+                      : () => setAdding(true)
+                }
               >
-                {filtered ? "Clear filters" : "Add your first lead"}
+                {offset > 0
+                  ? "Back to first page"
+                  : filtered
+                    ? "Clear filters"
+                    : "Add your first lead"}
               </button>
             </div>
           )}
@@ -522,7 +540,7 @@ function LeadWorkspace({ authEnabled }: { authEnabled: boolean }) {
               </ul>
             </section>
           )}
-          {data && data.total > 0 && (
+          {data && data.items.length > 0 && (
             <div className="list-footer">
               <span>
                 Showing {data.offset + 1}–

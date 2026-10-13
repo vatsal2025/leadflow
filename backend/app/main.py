@@ -170,6 +170,8 @@ def login(payload: Login, request: Request, response: Response):
         attempts.append(now)
     if not hmac.compare_digest(payload.password.encode(), settings.app_password.encode()):
         raise HTTPException(401, "Incorrect workspace password.")
+    with attempts_lock:
+        login_attempts.pop(address, None)
     response.set_cookie(
         COOKIE,
         signer.dumps({"v": password_version}),
