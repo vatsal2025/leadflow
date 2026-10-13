@@ -3,26 +3,26 @@ import hmac
 import logging
 import time
 from collections import defaultdict, deque
-from datetime import UTC, datetime, timedelta
-from datetime import time as day_time
 from threading import Lock
 from typing import Annotated, Literal
 from urllib.parse import urlparse
 from uuid import UUID, uuid4
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
-from sqlalchemy import case, func, select, text, update
+from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.config import get_settings
 from app.db import get_db, utcnow
-from app.models import STATUSES, Discussion, Lead
+from app.downloads import calendar_reminder, leads_csv
+from app.lead_queries import day_bounds as day_bounds
+from app.lead_queries import decorate, filtered_predicates, query_leads
+from app.models import Discussion, Lead
 from app.schemas import (
     DiscussionCreate,
     DiscussionOut,
@@ -32,6 +32,7 @@ from app.schemas import (
     LeadPage,
     LeadUpdate,
     Login,
+    Priority,
     Status,
 )
 
@@ -205,21 +206,11 @@ def as_lead(db: Session, lead: Lead) -> LeadOut:
         .order_by(Discussion.created_at.desc(), Discussion.id.desc())
         .limit(1)
     )
-    result = LeadOut.model_validate(lead)
-    result.last_discussion = DiscussionOut.model_validate(latest) if latest else None
-    return result
+    return decorate(lead, latest, utcnow())
 
 
-def day_bounds(timezone: str, now: datetime):
-    try:
-        tz = ZoneInfo(timezone)
-    except (ZoneInfoNotFoundError, ValueError):
-        raise HTTPException(422, "Unknown IANA timezone.") from None
-    today = now.astimezone(tz).date()
-    return (
-        datetime.combine(today, day_time.min, tz).astimezone(UTC),
-        datetime.combine(today + timedelta(days=1), day_time.min, tz).astimezone(UTC),
-    )
+Focus = Literal["all", "attention", "no_next_step", "quiet"]
+ArchiveScope = Literal["active", "archived", "all"]
 
 
 @app.get("/api/leads", response_model=LeadPage, dependencies=[Auth])
@@ -229,76 +220,58 @@ def list_leads(
     search: str = Query(default="", max_length=120),
     timezone: str = Query(default="UTC", max_length=100),
     follow_up: Literal["all", "today", "overdue"] = "all",
+    priority: Priority | None = None,
+    focus: Focus = "all",
+    archived: ArchiveScope = "active",
     offset: int = Query(default=0, ge=0, le=1000000),
     limit: int = Query(default=50, ge=1, le=100),
 ):
-    now = utcnow()
-    start, end = day_bounds(timezone, now)
-    today = (Lead.follow_up_at >= start) & (Lead.follow_up_at < end)
-    overdue = Lead.follow_up_at < now
-    predicates = []
-    if search.strip():
-        predicates.append(Lead.name.icontains(search.strip(), autoescape=True))
-    counts = dict(
-        db.execute(select(Lead.status, func.count()).where(*predicates).group_by(Lead.status)).all()
-    )
-    if status:
-        predicates.append(Lead.status == status.value)
-    today_count = db.scalar(select(func.count()).select_from(Lead).where(*predicates, today)) or 0
-    overdue_count = (
-        db.scalar(select(func.count()).select_from(Lead).where(*predicates, overdue)) or 0
-    )
-    if follow_up == "today":
-        predicates.append(today)
-    elif follow_up == "overdue":
-        predicates.append(overdue)
-    total = db.scalar(select(func.count()).select_from(Lead).where(*predicates)) or 0
-    # Pin today's follow-ups BEFORE pagination; overdue leads from earlier days follow.
-    leads = db.scalars(
-        select(Lead)
-        .where(*predicates)
-        .order_by(
-            case((today, 0), (overdue, 1), else_=2),
-            case((Lead.follow_up_at < end, Lead.follow_up_at), else_=None).asc().nulls_last(),
-            Lead.updated_at.desc(),
-            Lead.id,
-        )
-        .offset(offset)
-        .limit(limit)
-    ).all()
-    latest_by_lead = {}
-    if leads:
-        ranked = (
-            select(
-                Discussion.id,
-                func.row_number()
-                .over(
-                    partition_by=Discussion.lead_id,
-                    order_by=(Discussion.created_at.desc(), Discussion.id.desc()),
-                )
-                .label("rank"),
-            )
-            .where(Discussion.lead_id.in_([lead.id for lead in leads]))
-            .subquery()
-        )
-        latest = db.scalars(
-            select(Discussion).join(ranked, Discussion.id == ranked.c.id).where(ranked.c.rank == 1)
-        ).all()
-        latest_by_lead = {item.lead_id: item for item in latest}
-    items = []
-    for lead in leads:
-        item = LeadOut.model_validate(lead)
-        note = latest_by_lead.get(lead.id)
-        item.last_discussion = DiscussionOut.model_validate(note) if note else None
-        items.append(item)
-    return LeadPage(
-        items=items,
-        total=total,
-        limit=limit,
+    return query_leads(
+        db,
+        status=status,
+        search=search,
+        timezone=timezone,
+        follow_up=follow_up,
+        priority=priority,
+        focus=focus,
+        archived=archived,
         offset=offset,
-        status_counts={s: counts.get(s, 0) for s in STATUSES},
-        today_count=today_count,
-        overdue_count=overdue_count,
+        limit=limit,
+        now=utcnow(),
+    )
+
+
+@app.get("/api/leads/export.csv", dependencies=[Auth])
+def export_leads(
+    db: Db,
+    status: Status | None = None,
+    search: str = Query(default="", max_length=120),
+    timezone: str = Query(default="UTC", max_length=100),
+    follow_up: Literal["all", "today", "overdue"] = "all",
+    priority: Priority | None = None,
+    focus: Focus = "all",
+    archived: ArchiveScope = "active",
+):
+    _, _, predicates, *_ = filtered_predicates(
+        status=status,
+        search=search,
+        timezone=timezone,
+        follow_up=follow_up,
+        priority=priority,
+        focus=focus,
+        archived=archived,
+        now=utcnow(),
+    )
+    # Fetch one sentinel row: never silently truncate an export.
+    leads = db.scalars(select(Lead).where(*predicates).order_by(Lead.id).limit(10001)).all()
+    if len(leads) > 10000:
+        raise HTTPException(
+            422, "Export is limited to 10,000 leads. Narrow your filters and retry."
+        )
+    return Response(
+        content=leads_csv(leads),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="leadflow-leads.csv"'},
     )
 
 
@@ -306,15 +279,21 @@ def list_leads(
 def create_lead(payload: LeadCreate, db: Db, response: Response):
     existing = db.get(Lead, str(payload.id))
     if existing:
-        if (existing.name, existing.company, existing.phone) != (
-            payload.name,
-            payload.company,
-            payload.phone,
-        ):
+        fields = (
+            "name",
+            "company",
+            "phone",
+            "email",
+            "source",
+            "priority",
+            "estimated_value",
+            "currency",
+        )
+        if any(getattr(existing, field) != getattr(payload, field) for field in fields):
             raise HTTPException(409, "This request ID was already used. Refresh and try again.")
         response.status_code = 200
         return as_lead(db, existing)
-    lead = Lead(id=str(payload.id), name=payload.name, company=payload.company, phone=payload.phone)
+    lead = Lead(**payload.model_dump(exclude={"id"}), id=str(payload.id))
     db.add(lead)
     try:
         db.commit()
@@ -348,10 +327,11 @@ def update_version(db: Session, lead: Lead, expected_version: int, values: dict)
 def patch_lead(lead_id: UUID, payload: LeadUpdate, db: Db):
     lead = get_lead(db, lead_id)
     values = payload.model_dump(exclude_unset=True, exclude={"expected_version"})
-    if "status" in values and values["status"] is None:
-        raise HTTPException(422, "Status cannot be empty.")
+    for field in ("name", "status", "priority", "currency", "archived"):
+        if field in values and values[field] is None:
+            raise HTTPException(422, f"{field.capitalize()} cannot be empty.")
     if not values:
-        raise HTTPException(422, "Provide a status or follow-up change.")
+        raise HTTPException(422, "Provide at least one lead field to update.")
     update_version(db, lead, payload.expected_version, values)
     db.commit()
     db.refresh(lead)
@@ -390,10 +370,11 @@ def create_discussion(lead_id: UUID, payload: DiscussionCreate, db: Db, response
     lead = get_lead(db, lead_id)
     existing = db.get(Discussion, str(payload.id))
     if existing:
-        if (existing.lead_id, existing.note, existing.follow_up_at) != (
+        if (existing.lead_id, existing.note, existing.follow_up_at, existing.kind) != (
             lead.id,
             payload.note,
             payload.follow_up_at,
+            payload.kind,
         ):
             raise HTTPException(409, "This request ID was already used for a different discussion.")
         response.status_code = 200
@@ -408,6 +389,7 @@ def create_discussion(lead_id: UUID, payload: DiscussionCreate, db: Db, response
             id=str(payload.id),
             lead_id=lead.id,
             note=payload.note,
+            kind=payload.kind,
             follow_up_at=payload.follow_up_at,
         )
     )
@@ -420,3 +402,15 @@ def create_discussion(lead_id: UUID, payload: DiscussionCreate, db: Db, response
         ) from None
     db.refresh(lead)
     return as_lead(db, lead)
+
+
+@app.get("/api/leads/{lead_id}/reminder.ics", dependencies=[Auth])
+def download_reminder(lead_id: UUID, db: Db):
+    lead = get_lead(db, lead_id)
+    if not lead.follow_up_at:
+        raise HTTPException(404, "This lead has no scheduled follow-up.")
+    return Response(
+        content=calendar_reminder(lead, utcnow()),
+        media_type="text/calendar; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="leadflow-follow-up.ics"'},
+    )

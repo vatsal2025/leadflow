@@ -18,6 +18,11 @@ def protected(monkeypatch):
 
 def test_auth_login_logout_and_tampered_cookie(client, protected):
     assert client.get("/api/leads").status_code == 401
+    assert client.get("/api/leads/export.csv").status_code == 401
+    assert (
+        client.get("/api/leads/00000000-0000-4000-8000-000000000000/reminder.ics").status_code
+        == 401
+    )
     assert client.get("/api/auth/session").json()["authenticated"] is False
     assert client.post("/api/auth/login", json={"password": "wrong"}).status_code == 401
     response = client.post("/api/auth/login", json={"password": "correct-password-1234"})
