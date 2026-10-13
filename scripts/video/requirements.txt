@@ -1,0 +1,4 @@
+# Isolated media tooling; these are not application runtime dependencies.
+edge-tts==7.2.8
+imageio-ffmpeg==0.6.0
+pillow==12.3.0

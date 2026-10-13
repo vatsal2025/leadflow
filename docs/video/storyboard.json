@@ -1,0 +1,62 @@
+[
+  {
+    "id": "intro",
+    "title": "LeadFlow",
+    "eyebrow": "BUILT BY VATSAL",
+    "narration": "Meet LeadFlow: a focused sales workspace that turns conversations into clear next steps. This walkthrough covers the assignment deliverables, the working product, and the extra features that make it useful every day."
+  },
+  {
+    "id": "overview",
+    "title": "Every lead, one workspace",
+    "eyebrow": "01 / THE REQUIRED WORKFLOW",
+    "narration": "The lead list shows each contact, their status, the latest discussion, and time since that conversation. Today's follow-ups stay pinned at the top. Status filters and search narrow the list, while overdue reminders stand out in red."
+  },
+  {
+    "id": "create",
+    "title": "Start a new relationship",
+    "eyebrow": "02 / CREATE A LEAD",
+    "narration": "Adding a lead starts with a required name. Company and phone are optional, and the status defaults to New. We also added email, lead source, priority, and an estimated deal value, all validated before saving."
+  },
+  {
+    "id": "timeline",
+    "title": "Conversations with continuity",
+    "eyebrow": "03 / DISCUSS, SCHEDULE, UPDATE",
+    "narration": "Opening a lead shows a dialog on the same screen. Discussions appear newest first. Save a note with a follow-up, update the status, and the list reflects the change immediately. Reloading confirms that the history and reminder are stored in the database."
+  },
+  {
+    "id": "pipeline",
+    "title": "See the sales pipeline",
+    "eyebrow": "04 / BEYOND THE BRIEF",
+    "narration": "Inspired by practical patterns in Pipedrive, HubSpot, and Close, the pipeline gives every stage its own column. Move opportunities between stages, see complete matching totals, and keep estimated amounts separate by currency. Each stage supports pagination."
+  },
+  {
+    "id": "attention",
+    "title": "Know what needs attention",
+    "eyebrow": "05 / PRIORITIZE THE NEXT ACTION",
+    "narration": "Attention views surface open leads with overdue follow-ups, no next step, or no logged activity for seven days. Each flag explains the actual condition. Combine these views with priority, source, and status filters to focus the day's work."
+  },
+  {
+    "id": "profile",
+    "title": "Keep context, preserve history",
+    "eyebrow": "06 / A MORE USEFUL CRM",
+    "narration": "Contact details remain editable, and activities can be logged as notes, calls, emails, or meetings. Archive a lead to keep the active workspace focused, then restore it whenever needed. Its conversation history stays intact."
+  },
+  {
+    "id": "exports",
+    "title": "Follow through, on your terms",
+    "eyebrow": "07 / REMINDERS AND HANDOFFS",
+    "narration": "Schedule follow-ups independently, or use a shortcut for tomorrow morning. Download a calendar reminder for manual import. Export every lead matching your filters to CSV, across pages. Completing a reminder clears the current task without removing historical notes."
+  },
+  {
+    "id": "quality",
+    "title": "Built to be verified",
+    "eyebrow": "08 / ENGINEERING AND DELIVERY",
+    "narration": "The interface works on desktop and mobile. The API uses transactional saves, version checks, and retry protection. Automated API, browser, and accessibility checks verify the workflows. Deployment configuration supports Vercel, persistent PostgreSQL storage, and secure production sessions."
+  },
+  {
+    "id": "delivery",
+    "title": "Everything needed to review and run",
+    "eyebrow": "09 / COMPLETE DELIVERABLES",
+    "narration": "The public GitHub repository includes the complete source, setup README, environment example, meaningful commit history, Docker Compose, and a repeatable seed script with eight leads and fourteen discussions. Screenshots, verification records, and this walkthrough complete the delivery. LeadFlow, built by Vatsal."
+  }
+]

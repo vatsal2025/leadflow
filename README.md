@@ -124,6 +124,8 @@ Both the local API and frontend build load the root `.env`; process environment 
 | `API_INTERNAL_URL` | Next.js server-side upstream, default `http://127.0.0.1:8000`; baked into the frontend build |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` | Compose database credentials; replace development defaults before deployment |
 | `LEADFLOW_HOST` | Local standalone web bind address; default `127.0.0.1` |
+| `SERVERLESS` | Enables bounded serverless connection pooling; requires PostgreSQL with psycopg |
+| `API_HOSTNAME` | Exact backend hostname when hosted separately; no scheme or wildcard |
 
 Change `API_INTERNAL_URL` **before building** and rebuild if it changes. It is not a browser-facing URL. Use a URL-safe random hexadecimal PostgreSQL password with the supplied Compose connection-string template; reserved URI characters require percent-encoding the connection URL separately.
 
@@ -138,7 +140,9 @@ The application is a **single shared sales workspace**, with an optional local l
 
 Sessions are signed, HttpOnly, SameSite=Strict cookies with a 12-hour lifetime. Password/secret rotation invalidates outstanding sessions. Logout removes the current browser cookie. Unsafe requests require a non-simple client header; cross-origin browser requests are rejected. The API emits non-cached responses, request IDs, safe validation errors, and generic unexpected-error responses. The web service sets framing, MIME, referrer, permission, and content-security headers. The CSP permits Next.js inline bootstrapping; a strict nonce CSP is a separate hardening option.
 
-The Compose app containers run as non-root users with read-only filesystems, reduced capabilities, health checks, and resource limits. A single API worker is intentional: login throttling is in-process. Before scaling to multiple workers/replicas, move throttling to a shared store or enforce it at the trusted edge, run migrations as a separate release job, and use PostgreSQL. The API does not trust forwarded client-IP headers. Login attempts behind the proxy share its rate bucket.
+The Compose app containers run as non-root users with read-only filesystems, reduced capabilities, health checks, and resource limits. Login throttling is atomic and database-backed, so it survives restarts and is shared by serverless instances. This single-password workspace allows five attempts per 60-second window across all clients; a successful sign-in resets the counter. A distributed attack can temporarily delay legitimate sign-ins, so a larger multi-user deployment should add identity-specific limits and edge protection. Forwarded client-IP headers are not trusted. Run migrations as a separate release job and use PostgreSQL when scaling.
+
+For Vercel, deploy `frontend` and `backend` as separate projects. Set `SERVERLESS=true`, `API_HOSTNAME` to the exact API hostname, and the existing production security variables. `API_INTERNAL_URL` must point to the deployed API before the frontend build. The database client caps each instance at one pooled connection, recycles stale connections, and disables prepared statements for transaction poolers. Migration `0003` enables PostgreSQL row-level security so browser-facing database roles cannot read CRM data without a policy; the backend uses a private database connection. See [hosted deployment](docs/DEPLOYMENT.md) for the release procedure.
 
 For database backups, use PostgreSQL's native tools or managed backups. For example, capture a dump inside the database container, then copy it out (avoids binary-redirection issues in older PowerShell):
 
@@ -222,3 +226,5 @@ The brief's stack preference is written as “NextJs + FastAI” but permits any
 ## Submission
 
 Public repository: **https://github.com/vatsal2025/leadflow**. The setup instructions, `.env.example`, meaningful commit history, and screenshots are included in this repository. See [the verification record](docs/VERIFICATION.md) for the checks actually executed and their results.
+
+The [product walkthrough release](https://github.com/vatsal2025/leadflow/releases/tag/v1.1.0) includes the narrated English video, captions, and poster. Its [storyboard and reproducible recording scripts](docs/video/README.md) cover both the assignment deliverables and the extra CRM features. The [hosted deployment record](docs/DEPLOYMENT.md) distinguishes prepared infrastructure from a verified live release.
