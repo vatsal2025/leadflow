@@ -4,8 +4,8 @@ Validated on **13 October 2026**. These are executed checks, not inferred result
 
 | Check | Result |
 | --- | --- |
-| Python API suite, SQLite, Windows/Python 3.13 | 62 passed |
-| Same API suite against PostgreSQL 17 in a Linux Docker container | 62 passed |
+| Python API suite, SQLite, Windows/Python 3.13 | 63 passed |
+| Same API suite against PostgreSQL 17 in Linux CI | 63 passed |
 | Production browser suite, desktop and mobile Chromium | 34 passed, including productivity workflows, accessible draft confirmations, short-viewport dialogs, pagination, and full-board overflow |
 | Next.js optimized production build | Passed locally and in the Linux container build |
 | TypeScript, ESLint, Prettier | Passed |
@@ -42,6 +42,8 @@ The [public HTTPS deployment](https://leadflow-vatsal.vercel.app) is live on Ver
 The video records a real isolated local demo workspace. Its deployment explanation remains applicable to the now-live release; the recording does not show the hosted database or expose production access credentials.
 
 ## Scope of verification
+
+The current public deployment opens without login at the owner's request. The API suite verifies password-free production access without a session cookie, while retaining coverage for deployments that choose optional authentication. Earlier hosted login checks above describe the previously enabled password gate; public application API access is now intentional. Supabase's direct anonymous Data API restrictions still apply independently.
 
 - Browser execution uses Chromium desktop/mobile emulation; Safari, Firefox, and physical phones were not separately tested.
 - Docker verification uses the documented local demonstration configuration. The hosted release was separately checked over HTTPS; external backups and an always-on availability commitment have not been configured on the free database plan.

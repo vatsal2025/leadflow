@@ -4,7 +4,7 @@ A single-screen lead management workspace for tracking conversations and followi
 
 Includes a sales pipeline, editable contact profiles, priority and attention views, typed activity history, standalone follow-up scheduling, calendar downloads, filtered CSV export, and reversible archiving. The [product decisions](docs/PRODUCT_DECISIONS.md) explain the inspiration from Pipedrive, HubSpot, and Close, and define each feature's behavior.
 
-**Live app:** [leadflow-vatsal.vercel.app](https://leadflow-vatsal.vercel.app). Hosted on Vercel with a private Supabase PostgreSQL database in Mumbai. The workspace requires a password supplied privately by the owner. [Watch the 2:47 English walkthrough](https://github.com/vatsal2025/leadflow/releases/tag/v1.1.0).
+**Live app:** [leadflow-vatsal.vercel.app](https://leadflow-vatsal.vercel.app). Hosted on Vercel with a private Supabase PostgreSQL database in Mumbai. The workspace opens directly without login; visitors can view and edit the shared demo leads. [Watch the 2:47 English walkthrough](https://github.com/vatsal2025/leadflow/releases/tag/v1.1.0).
 
 ![LeadFlow workspace](docs/screenshots/01-workspace.png)
 
@@ -124,7 +124,7 @@ Both the local API and frontend build load the root `.env`; process environment 
 | `APP_ENV` | `development`, `test`, or `production`; default `development` |
 | `DATABASE_URL` | Local default `sqlite:///./leadflow.db`; use `postgresql+psycopg://...` for PostgreSQL |
 | `PUBLIC_ORIGIN` | Exact browser origin, default `http://localhost:3000`; checked on mutations |
-| `APP_PASSWORD` | Optional shared workspace password locally; production requires at least 16 characters |
+| `APP_PASSWORD` | Empty opens the workspace without login; an optional production password must have at least 16 characters |
 | `SESSION_SECRET` | Random signing secret of at least 32 characters; required when authentication is enabled |
 | `COOKIE_SECURE` | `true` for HTTPS; production requires `true` |
 | `API_INTERNAL_URL` | Next.js server-side upstream, default `http://127.0.0.1:8000`; baked into the frontend build |
@@ -137,12 +137,12 @@ Change `API_INTERNAL_URL` **before building** and rebuild if it changes. It is n
 
 ## Production deployment
 
-The application is a **single shared sales workspace**, with an optional local login and an enforced production password gate. It does not implement separate users, tenants, roles, or per-representative ownership.
+The application is a **single shared sales workspace**. The live demo opens without login. An optional password gate is available by setting `APP_PASSWORD`; leaving it empty allows visitors to view and edit shared records. It does not implement separate users, tenants, roles, or per-representative ownership.
 
 1. Provision a domain, an HTTPS reverse proxy, durable PostgreSQL storage, and backups. Route the proxy to the loopback web port. Set an appropriate request-size and request-rate limit at the edge.
-2. Set `APP_ENV=production`, `PUBLIC_ORIGIN=https://your-domain`, `COOKIE_SECURE=true`, a strong `APP_PASSWORD`, a random `SESSION_SECRET`, and non-default database credentials. Generate each secret with `python -c "import secrets; print(secrets.token_hex(32))"`. Store them in your deployment secret manager or an untracked `.env`.
-3. Run `docker compose up --build -d --wait`. Production startup rejects missing credentials or insecure cookie/origin settings. Seed only when deliberately preparing a demonstration workspace.
-4. Confirm `/api/health/ready`, a successful login, a saved discussion, and persistence after restarting the API. Monitor service health and application logs. No automatic public deployment is configured.
+2. Set `APP_ENV=production`, `PUBLIC_ORIGIN=https://your-domain`, `COOKIE_SECURE=true`, and non-default database credentials. Leave `APP_PASSWORD` empty for direct access. To enable login instead, set a strong `APP_PASSWORD` and random `SESSION_SECRET`. Generate secrets with `python -c "import secrets; print(secrets.token_hex(32))"` and store them in your deployment secret manager or an untracked `.env`.
+3. Run `docker compose up --build -d --wait`. Production startup rejects insecure cookie/origin settings and weak credentials when optional login is enabled. Seed only when deliberately preparing a demonstration workspace.
+4. Confirm `/api/health/ready`, direct workspace access (or login if configured), a saved discussion, and persistence after restarting the API. Monitor service health and application logs. No automatic public deployment is configured.
 
 Sessions are signed, HttpOnly, SameSite=Strict cookies with a 12-hour lifetime. Password/secret rotation invalidates outstanding sessions. Logout removes the current browser cookie. Unsafe requests require a non-simple client header; cross-origin browser requests are rejected. The API emits non-cached responses, request IDs, safe validation errors, and generic unexpected-error responses. The web service sets framing, MIME, referrer, permission, and content-security headers. The CSP permits Next.js inline bootstrapping; a strict nonce CSP is a separate hardening option.
 

@@ -74,3 +74,30 @@ def test_production_rejects_insecure_config():
         public_origin="https://leads.example.com",
     )
     assert settings.cookie_secure
+
+
+def test_public_production_workspace_needs_no_password_or_cookie(client, monkeypatch):
+    settings = Settings(
+        _env_file=None,
+        app_env="production",
+        app_password="",
+        session_secret="",
+        cookie_secure=True,
+        public_origin="https://leads.example.com",
+    )
+    monkeypatch.setattr(main, "settings", settings)
+    assert client.get("/api/auth/session").json() == {
+        "authenticated": True,
+        "auth_enabled": False,
+    }
+    assert client.get("/api/leads").status_code == 200
+    assert not client.cookies
+    with pytest.raises(ValueError, match="at least 16 characters"):
+        Settings(
+            _env_file=None,
+            app_env="production",
+            app_password="short",
+            session_secret="s" * 40,
+            cookie_secure=True,
+            public_origin="https://leads.example.com",
+        )

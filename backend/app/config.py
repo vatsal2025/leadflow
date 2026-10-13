@@ -21,8 +21,10 @@ class Settings(BaseSettings):
         if self.app_env not in {"development", "test", "production"}:
             raise ValueError("APP_ENV must be development, test, or production")
         if self.app_env == "production":
-            if len(self.app_password) < 16:
-                raise ValueError("Production requires APP_PASSWORD of at least 16 characters")
+            if self.app_password and len(self.app_password) < 16:
+                raise ValueError(
+                    "When enabled, production APP_PASSWORD requires at least 16 characters"
+                )
             if not self.cookie_secure or not self.public_origin.startswith("https://"):
                 raise ValueError(
                     "Production requires COOKIE_SECURE=true and an HTTPS PUBLIC_ORIGIN"
