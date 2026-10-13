@@ -18,9 +18,11 @@ test-results/
 *.db-shm
 *.db-wal
 *.log
+*.dump
 *.pid
 data/
 .DS_Store
 Thumbs.db
 *.pdf
 .tools/
+/Microsoft/
