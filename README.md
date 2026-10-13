@@ -4,7 +4,7 @@ A single-screen lead management workspace for tracking conversations and followi
 
 Includes a sales pipeline, editable contact profiles, priority and attention views, typed activity history, standalone follow-up scheduling, calendar downloads, filtered CSV export, and reversible archiving. The [product decisions](docs/PRODUCT_DECISIONS.md) explain the inspiration from Pipedrive, HubSpot, and Close, and define each feature's behavior.
 
-**Live app:** [leadflow-vatsal.vercel.app](https://leadflow-vatsal.vercel.app). Hosted on Vercel with a private Supabase PostgreSQL database in Mumbai. The workspace opens directly without login; visitors can view and edit the shared demo leads. [Watch the 2:47 English walkthrough](https://github.com/vatsal2025/leadflow/releases/tag/v1.1.0).
+**Live app:** [leadflow-vatsal.vercel.app](https://leadflow-vatsal.vercel.app). Hosted on Vercel with a private Supabase PostgreSQL database in Mumbai. The workspace opens directly without login; visitors can view and edit the shared demo leads. [Watch the 2:47 English walkthrough on Google Drive](https://drive.google.com/file/d/1zipQsRm-RT7pSH17aVuU-XLjd_XPhM_f/view).
 
 ![LeadFlow workspace](docs/screenshots/01-workspace.png)
 
@@ -233,4 +233,6 @@ The brief's stack preference is written as “NextJs + FastAI” but permits any
 
 Public repository: **https://github.com/vatsal2025/leadflow**. The setup instructions, `.env.example`, meaningful commit history, and screenshots are included in this repository. See [the verification record](docs/VERIFICATION.md) for the checks actually executed and their results.
 
-The [product walkthrough release](https://github.com/vatsal2025/leadflow/releases/tag/v1.1.0) includes the narrated English video, captions, and poster. Its [storyboard and reproducible recording scripts](docs/video/README.md) cover both the assignment deliverables and the extra CRM features. The [hosted deployment record](docs/DEPLOYMENT.md) distinguishes prepared infrastructure from a verified live release.
+The [PDF deliverables checklist](docs/DELIVERABLES.md) maps every required flow, all five bonuses, the submission files, and the additional features to their implementation and verification evidence.
+
+The [Google Drive walkthrough](https://drive.google.com/file/d/1zipQsRm-RT7pSH17aVuU-XLjd_XPhM_f/view) opens in the browser's video viewer without requiring a download or Google sign-in. Press Play to watch. The [release assets](https://github.com/vatsal2025/leadflow/releases/tag/v1.1.0) remain available for optional MP4, caption, and poster downloads. The [storyboard and reproducible recording scripts](docs/video/README.md) cover both the assignment deliverables and the extra CRM features. The [hosted deployment record](docs/DEPLOYMENT.md) documents the verified live release.

@@ -1,5 +1,7 @@
 # Product walkthrough
 
+[Watch on Google Drive](https://drive.google.com/file/d/1zipQsRm-RT7pSH17aVuU-XLjd_XPhM_f/view). This link opens the video viewer; press Play to stream without downloading or signing in. The MP4, captions, and poster are also available as optional [GitHub release downloads](https://github.com/vatsal2025/leadflow/releases/tag/v1.1.0).
+
 A narrated English walkthrough covering the required lead list, creation and timeline flows; search, filters, reminders, and persistence; pipeline, priorities, editable contacts, activity types, archive/restore, calendar and CSV downloads; mobile behavior; and the repository's setup, Docker, seed, and verification deliverables.
 
 The finished video uses actual browser recordings from an isolated demo database, synthetic English narration, chapter labels, captions, and a branded opening and closing. It does not record passwords or modify the user's existing local records.
