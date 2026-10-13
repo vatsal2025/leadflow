@@ -34,7 +34,7 @@ Checked against all three pages of the supplied assignment PDF on 13 October 202
 | Public GitHub repository | Complete. | [vatsal2025/leadflow](https://github.com/vatsal2025/leadflow) |
 | `.env.example` lists required variables | Complete, including local, production, database, and serverless settings. Password is optional. | [.env.example](../.env.example), [configuration table](../README.md#configuration) |
 | README with working setup steps | Complete: Windows/local setup, Docker, database migrations, seed data, checks, and deployment. | [README](../README.md), [deployment guide](DEPLOYMENT.md) |
-| Video / screenshots of working flow | Complete: a 2:47 English narrated 1080p walkthrough, captions, poster, and six browser screenshots. | [Watch on Google Drive](https://drive.google.com/file/d/1zipQsRm-RT7pSH17aVuU-XLjd_XPhM_f/view), [screenshots](screenshots/), [video sources](video/README.md) |
+| Video / screenshots of working flow | Complete: a 2:47 English narrated 1080p walkthrough, captions, poster, and eight current browser screenshots. | [Watch on Google Drive](https://drive.google.com/file/d/1zipQsRm-RT7pSH17aVuU-XLjd_XPhM_f/view), [screenshots](screenshots/), [video sources](video/README.md) |
 | Meaningful commit history | Complete. Commits separate API, frontend, deployment, productivity, and UI work. VATSAL is the sole author and committer. | [Commit history](https://github.com/vatsal2025/leadflow/commits/main/) |
 | Clean frontend component structure | Complete: workspace, timeline, profiles, reminder tools, pipeline, and shared UI components. | [Frontend components](../frontend/src/components/) |
 | Correct API status codes and clean error handling | Complete: validation, missing resources, conflicts, rejected origins, size limits, safe error messages, and optional-login errors are covered. | [API](../backend/app/main.py), [API tests](../backend/tests/test_api.py) |
@@ -45,6 +45,8 @@ Checked against all three pages of the supplied assignment PDF on 13 October 202
 All implemented: six-stage visual pipeline with pagination and currency totals; editable contact profiles; priorities; lead sources; estimated deal values; needs-attention/no-next-step/quiet views; typed Note/Call/Email/Meeting activities; standalone scheduling and quick dates; calendar downloads; filtered CSV export; archive/restore; responsive layouts; accessible draft-discard confirmations; single-scroll dialogs; direct access without a password; and a live Vercel/Supabase deployment.
 
 [Product decisions](PRODUCT_DECISIONS.md) documents the Pipedrive, HubSpot, and Close inspiration and the exact scope. Activity labels do not send email or place calls, and calendar downloads do not imply automatic calendar synchronization.
+
+The [architecture and design guide](ARCHITECTURE.md) adds deployment and data-model diagrams, the save/conflict sequence, a component map, and a wireframe of the implemented workspace and dialogs. These diagrams and the current screenshot gallery are linked directly from the README.
 
 ## Executed verification
 

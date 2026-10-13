@@ -1,6 +1,6 @@
 /* global document */
 import console from "node:console";
-import { chromium, devices } from "@playwright/test";
+import { chromium, devices, expect } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
@@ -12,6 +12,7 @@ try {
     viewport: { width: 1440, height: 1100 },
     deviceScaleFactor: 1,
     timezoneId: "Asia/Kolkata",
+    reducedMotion: "reduce",
   });
   const page = await context.newPage();
   await page.goto(process.env.LEADFLOW_URL || "http://localhost:3000");
@@ -23,11 +24,43 @@ try {
   });
   await page.getByRole("button", { name: "Open Aarav Mehta" }).click();
   await page.getByRole("dialog").locator(".note-card").first().waitFor();
+  await expect(
+    page.getByRole("dialog").getByLabel("Status", { exact: true }),
+  ).toBeEnabled();
   await page.screenshot({
     path: path.join(output, "02-timeline.png"),
     fullPage: false,
   });
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("tab", { name: "Lead details" }).click();
+  await page.screenshot({ path: path.join(output, "07-contact-profile.png") });
+  await dialog.getByRole("tab", { name: "Activity", exact: true }).click();
+  await dialog.getByRole("button", { name: "Reschedule follow-up" }).click();
+  await dialog.getByRole("button", { name: "Tomorrow, 9 AM" }).click();
+  await dialog.locator(".timeline-content").evaluate((element) => {
+    element.scrollTop = 0;
+  });
+  await page.screenshot({ path: path.join(output, "08-follow-up.png") });
+  await dialog.getByRole("button", { name: "Cancel scheduling" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Discard changes" })
+    .click();
+  await dialog
+    .getByLabel("Add a discussion")
+    .fill("Prepare a tailored proposal and confirm the next conversation.");
   await page.getByRole("button", { name: "Close dialog" }).click();
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Keep editing" })
+    .waitFor();
+  await page.screenshot({
+    path: path.join(output, "06-discard-confirmation.png"),
+  });
+  await page
+    .getByRole("alertdialog")
+    .getByRole("button", { name: "Discard changes" })
+    .click();
   await page.getByRole("button", { name: "Pipeline", exact: true }).click();
   await page
     .getByRole("region", { name: "Qualified stage", exact: true })
@@ -54,6 +87,7 @@ try {
   const mobile = await browser.newContext({
     ...devices["iPhone 13"],
     timezoneId: "Asia/Kolkata",
+    reducedMotion: "reduce",
   });
   const mobilePage = await mobile.newPage();
   await mobilePage.goto(process.env.LEADFLOW_URL || "http://localhost:3000");
@@ -64,7 +98,9 @@ try {
     fullPage: true,
   });
   await mobile.close();
-  console.log(`Saved five application screenshots to ${output}`);
+  console.log(
+    `Saved eight application screenshots to ${output}; no changes were saved`,
+  );
 } finally {
   await browser.close();
 }

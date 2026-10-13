@@ -8,6 +8,66 @@ Includes a sales pipeline, editable contact profiles, priority and attention vie
 
 ![LeadFlow workspace](docs/screenshots/01-workspace.png)
 
+**Review links:** [Live app](https://leadflow-vatsal.vercel.app) · [Watch video](https://drive.google.com/file/d/1zipQsRm-RT7pSH17aVuU-XLjd_XPhM_f/view) · [PDF checklist](docs/DELIVERABLES.md) · [Architecture](#architecture) · [Wireframe](#wireframe) · [Screenshots](#screenshots) · [Verification](docs/VERIFICATION.md)
+
+## Deliverables, bonuses, and extras
+
+The [requirement-by-requirement audit](docs/DELIVERABLES.md) links each item in the PDF to its implementation and verification evidence.
+
+| Required deliverable / flow | Included |
+| --- | --- |
+| Single-screen lead list | Name, status badge, latest discussion, time ago, and all six status filters |
+| Today's follow-ups first | Timezone-aware pinning before pagination; earlier overdue reminders follow |
+| Timeline dialog | Newest-first history, older-history pagination, note form with optional follow-up, and status updates |
+| Immediate, persistent changes | Discussion/reminder saved atomically; list refreshes after success; reload preserves data |
+| Add new lead | Required name, optional company/phone, and New as the default status |
+| Public source and history | [Public repository](https://github.com/vatsal2025/leadflow) and meaningful commits authored by VATSAL |
+| Setup and environment | This README, [.env.example](.env.example), migrations, and local/Docker instructions |
+| Working-flow media | [2:47 English video](https://drive.google.com/file/d/1zipQsRm-RT7pSH17aVuU-XLjd_XPhM_f/view), captions, and eight current screenshots |
+
+**All five PDF bonuses are included:**
+
+| Bonus | Implementation |
+| --- | --- |
+| Search leads by name | Case-insensitive search; also matches company, email, and source |
+| Red overdue highlights | Red styling plus explicit overdue text in the list and dialog |
+| Docker Compose | Web, API, and PostgreSQL services with health checks and persistent storage |
+| Seed script with at least five leads and discussions | Eight fictional leads and fourteen discussions; repeatable without overwriting edits |
+| Filters | Status and follow-up filters, plus priority, attention, and archive visibility |
+
+**Extras:**
+
+| Improvement | What it adds |
+| --- | --- |
+| Visual sales pipeline | Six stages, direct stage changes, independent lane pagination, full matching counts, and totals by currency |
+| Rich contact profiles | Editable contact details, email, source, priority, estimated deal value, and currency |
+| Attention views | Needs attention, No next step, and Quiet 7+ days, with factual explanations |
+| Activity types | Note, Call, Email, and Meeting in the shared discussion history |
+| Independent scheduling | Schedule/reschedule without a note; tomorrow/seven-day shortcuts; complete reminders without erasing history |
+| Calendar and CSV | `.ics` reminders and filtered CSV across pages, with spreadsheet-formula neutralization |
+| Reversible archiving | Archive and restore contacts while retaining their discussions |
+| Responsive, accessible UI | Desktop/mobile layouts, keyboard support, one-scroll dialogs, styled discard confirmations, and draft preservation |
+| Data integrity | Version-based conflict checks, UUID retry protection, server validation, UTC timestamps, and schema migrations |
+| Hosted delivery | Working Vercel frontend/API and Supabase PostgreSQL in Mumbai; direct access without login |
+
+The [product decisions](docs/PRODUCT_DECISIONS.md) describe the Pipedrive, HubSpot, and Close inspiration and each feature's boundaries.
+
+## Architecture
+
+![LeadFlow deployment architecture](docs/design/architecture.svg)
+
+The browser runs the React UI and TanStack Query. Next.js serves the application and forwards same-origin `/api/*` requests to FastAPI. FastAPI validates inputs and uses SQLAlchemy/psycopg to persist leads and discussions in Supabase PostgreSQL through a TLS transaction pooler. Alembic migrations run separately before a release. Database credentials stay server-side.
+
+Each lead has many discussion records. The lead stores its current follow-up, status, contact fields, estimated value, archive state, and version; each discussion stores an immutable historical note, activity type, creation time, and optional reminder snapshot. A note and its lead update commit together. The UI refreshes its detail/list/history caches only after a successful response.
+
+Local development supports either Docker PostgreSQL or SQLite. The [architecture guide](docs/ARCHITECTURE.md) includes the entity relationship diagram, save/conflict sequence, deployment boundaries, component map, and operating limits. The public demo permits shared edits; direct anonymous Supabase access remains restricted by row-level security.
+
+## Wireframe
+
+![Single-screen workspace and dialog wireframe](docs/design/wireframe.svg)
+
+The wireframe maps the implemented workspace, add-lead form, activity dialog, and contact editor. List and pipeline are views of the same page. The lead heading remains visible while one content area scrolls; confirmations protect unsaved changes. See the finished interface in the screenshots below.
+
 ## Run with Docker
 
 Requires Docker Engine with Compose v2. Start Docker Desktop first on Windows/macOS.
@@ -88,6 +148,24 @@ To verify/run an optimized frontend, stop the frontend development server, then 
 9. Open **Lead details** to edit a contact or archive it. Use the Archived leads visibility filter to find and restore archived records; history is preserved.
 10. Use **Schedule follow-up** independently of a discussion. Download a 15-minute calendar event with **Calendar (.ics)**, or use **Export CSV** for all leads matching the current filters (maximum 10,000).
 
+## Screenshots
+
+Captured from the current deployed app, including the single-scroll dialog and password-free workspace. The [capture script](frontend/scripts/capture.mjs) opens forms and discards temporary drafts without saving changes.
+
+| Screen | What to inspect |
+| --- | --- |
+| [Workspace](docs/screenshots/01-workspace.png) | Lead list, today pinning, status/search/attention filters |
+| [Timeline](docs/screenshots/02-timeline.png) | Discussion history, reminder, composer, and status selector |
+| [Add lead](docs/screenshots/03-add-lead.png) | Required name and optional contact/opportunity fields |
+| [Mobile](docs/screenshots/04-mobile.png) | Responsive layout with all controls inside the viewport |
+| [Pipeline](docs/screenshots/05-pipeline.png) | Stage columns, counts, and stage changes |
+| [Discard confirmation](docs/screenshots/06-discard-confirmation.png) | In-app confirmation with safe initial focus |
+| [Contact profile](docs/screenshots/07-contact-profile.png) | Editable fields and archive action |
+| [Follow-up scheduler](docs/screenshots/08-follow-up.png) | Standalone date/time editor and quick dates |
+
+<details>
+<summary>View the desktop, dialog, and mobile screenshots</summary>
+
 ![Sales pipeline](docs/screenshots/05-pipeline.png)
 
 ![Discussion timeline](docs/screenshots/02-timeline.png)
@@ -99,6 +177,12 @@ The lead dialog has one scrolling content area and an accessible confirmation fo
 ![Add a new lead](docs/screenshots/03-add-lead.png)
 
 <img src="docs/screenshots/04-mobile.png" alt="LeadFlow on a mobile viewport" width="390" />
+
+![Contact profile](docs/screenshots/07-contact-profile.png)
+
+![Standalone follow-up scheduler](docs/screenshots/08-follow-up.png)
+
+</details>
 
 ## Defined behavior
 
@@ -144,7 +228,7 @@ The application is a **single shared sales workspace**. The live demo opens with
 3. Run `docker compose up --build -d --wait`. Production startup rejects insecure cookie/origin settings and weak credentials when optional login is enabled. Seed only when deliberately preparing a demonstration workspace.
 4. Confirm `/api/health/ready`, direct workspace access (or login if configured), a saved discussion, and persistence after restarting the API. Monitor service health and application logs. No automatic public deployment is configured.
 
-Sessions are signed, HttpOnly, SameSite=Strict cookies with a 12-hour lifetime. Password/secret rotation invalidates outstanding sessions. Logout removes the current browser cookie. Unsafe requests require a non-simple client header; cross-origin browser requests are rejected. The API emits non-cached responses, request IDs, safe validation errors, and generic unexpected-error responses. The web service sets framing, MIME, referrer, permission, and content-security headers. The CSP permits Next.js inline bootstrapping; a strict nonce CSP is a separate hardening option.
+When optional login is enabled, sessions are signed, HttpOnly, SameSite=Strict cookies with a 12-hour lifetime. Password/secret rotation invalidates outstanding sessions. Logout removes the current browser cookie. The public demo needs no session cookie. Unsafe requests require a non-simple client header; cross-origin browser requests are rejected. The API emits non-cached responses, request IDs, safe validation errors, and generic unexpected-error responses. The web service sets framing, MIME, referrer, permission, and content-security headers. The CSP permits Next.js inline bootstrapping; a strict nonce CSP is a separate hardening option.
 
 The Compose app containers run as non-root users with read-only filesystems, reduced capabilities, health checks, and resource limits. Login throttling is atomic and database-backed, so it survives restarts and is shared by serverless instances. This single-password workspace allows five attempts per 60-second window across all clients; a successful sign-in resets the counter. A distributed attack can temporarily delay legitimate sign-ins, so a larger multi-user deployment should add identity-specific limits and edge protection. Forwarded client-IP headers are not trusted. Run migrations as a separate release job and use PostgreSQL when scaling.
 
@@ -160,6 +244,8 @@ docker compose cp db:/tmp/leadflow.dump ./leadflow.dump
 Substitute your configured database/user. Keep backup files outside the public repository, encrypt them, and regularly test restores into a separate database. SQLite is intended for local use or small single-instance installations; use its online backup API rather than copying a live database file.
 
 ## Verification
+
+**Executed results:** 63 API tests passed on each of SQLite and PostgreSQL; 34 desktop/mobile browser tests passed. Lint, type checks, formatting, dependency audits, production builds, and Docker smoke checks passed in [GitHub Actions](https://github.com/vatsal2025/leadflow/actions/workflows/ci.yml). Hosted checks verified direct access, persisted create/edit operations, exports, and the updated dialogs. [Verification details and limits](docs/VERIFICATION.md) record what was actually tested.
 
 Backend tests, from `backend`:
 
@@ -224,6 +310,9 @@ frontend/src/         Single-screen UI, dialogs, query state, date handling
 frontend/tests/       Desktop/mobile browser and accessibility tests
 scripts/              Dependency locking and isolated test API startup
 docs/screenshots/     Screenshots of the working application
+docs/design/          Architecture and wireframe diagrams
+docs/ARCHITECTURE.md  Data model, request flow, and component map
+docs/DELIVERABLES.md  PDF requirements, bonuses, and extras audit
 .github/workflows/    Automated verification
 ```
 

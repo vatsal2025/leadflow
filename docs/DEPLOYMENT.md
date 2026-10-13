@@ -8,7 +8,7 @@ The live workspace now opens directly without a password, as requested by the ow
 
 **Live and verified on 13 October 2026:** [leadflow-vatsal.vercel.app](https://leadflow-vatsal.vercel.app), with API origin `https://leadflow-api-vatsal.vercel.app`. The free Supabase resource `leadflow-db` is provisioned in Mumbai and connected only to the API's production environment. Migration `0003` is applied, with eight fictional demo leads and fourteen discussions seeded. The application uses the transaction pooler over TLS; migrations used the session pooler.
 
-The public HTTPS app passed browser login, protected-data and origin checks, secure cookie checks, create/activity/status/profile persistence, follow-up scheduling, real calendar/CSV downloads, archive/restore, pipeline rendering, accessibility scanning, and logout. Anonymous Supabase Data API requests returned no rows from any of the four protected tables. Production secrets and the workspace password are excluded from Git and release assets.
+The hosted app passed create/activity/status/profile persistence, follow-up scheduling, calendar/CSV downloads, archive/restore, pipeline rendering, accessibility scanning, and origin checks. Its initial protected release also passed login, secure-cookie, and logout checks. The current password-free release was checked in fresh desktop/mobile browser sessions, including persisted creation and editing with no login cookie. Anonymous Supabase Data API requests returned no rows from any of the four protected tables. Production secrets are excluded from Git and release assets.
 
 ## Database and release procedure
 
@@ -23,10 +23,10 @@ The backend's `pyproject.toml` contains only local lint/test settings and is exc
 
 ## Serverless safeguards
 
-- A single database-backed login window is shared by all instances. Its atomic upsert permits five attempts per 60-second window; successful login resets it. No untrusted forwarded IP header can bypass the counter. This shared-password design favors protection against distributed password guessing; abusive attempts can temporarily delay legitimate logins.
+- When optional login is enabled, a single database-backed login window is shared by all instances. Its atomic upsert permits five attempts per 60-second window; successful login resets it. No untrusted forwarded IP header can bypass the counter. The current public demo does not use a password gate.
 - Each serverless instance has a one-connection pool, no overflow, a finite wait timeout, pre-ping, and connection recycling. Psycopg automatic prepared statements are disabled for transaction-pooler compatibility.
 - Migration `0003` enables PostgreSQL row-level security on leads, discussions, login windows, and the migration-version table, with no anonymous public policies. The private backend connection must have the required privileges; do not enable public read policies for these tables.
-- Database errors return safe responses; secrets stay in server-side environment variables. The public frontend calls the API through its same-origin proxy. Session cookies are Secure, HttpOnly, and SameSite=Strict in production.
+- Database errors return safe responses; secrets stay in server-side environment variables. The public frontend calls the API through its same-origin proxy. Optional production session cookies are Secure, HttpOnly, and SameSite=Strict; the public demo requires no session cookie.
 
 Supabase's free plan is suitable for an assessment/demo and is subject to the provider's current quotas and inactivity behavior. An always-on business deployment should select capacity, backup retention, and availability commitments deliberately. No paid plan has been authorized or provisioned here.
 
