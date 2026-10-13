@@ -34,13 +34,19 @@ def utcnow() -> datetime:
     return datetime.now(UTC)
 
 
-def make_engine(url: str):
+def make_engine(url: str, *, serverless: bool = False):
+    options = (
+        {"pool_size": 1, "max_overflow": 0, "pool_timeout": 10, "pool_recycle": 300}
+        if serverless
+        else {}
+    )
     engine = create_engine(
         url,
         pool_pre_ping=True,
         connect_args={"check_same_thread": False, "timeout": 15}
         if url.startswith("sqlite")
-        else {},
+        else {"prepare_threshold": None, "connect_timeout": 10},
+        **options,
     )
     if url.startswith("sqlite"):
 
@@ -54,7 +60,7 @@ def make_engine(url: str):
     return engine
 
 
-engine = make_engine(get_settings().database_url)
+engine = make_engine(get_settings().database_url, serverless=get_settings().serverless)
 SessionLocal = sessionmaker(bind=engine, expire_on_commit=False)
 
 

@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     app_password: str = ""
     session_secret: str = ""
     cookie_secure: bool = False
+    serverless: bool = False
+    api_hostname: str = ""
 
     @model_validator(mode="after")
     def validate_security(self):
@@ -25,6 +27,10 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "Production requires COOKIE_SECURE=true and an HTTPS PUBLIC_ORIGIN"
                 )
+        if self.serverless and not self.database_url.startswith("postgresql+psycopg://"):
+            raise ValueError("Serverless deployments require persistent PostgreSQL via psycopg")
+        if self.api_hostname and any(char in self.api_hostname for char in "/:* "):
+            raise ValueError("API_HOSTNAME must be an exact hostname without a scheme or port")
         if self.app_password and len(self.session_secret) < 32:
             raise ValueError("Authentication requires SESSION_SECRET of at least 32 characters")
         self.public_origin = self.public_origin.rstrip("/")

@@ -26,3 +26,5 @@ Thumbs.db
 *.pdf
 .tools/
 /Microsoft/
+.vercel/
+deliverables/

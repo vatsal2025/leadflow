@@ -13,7 +13,6 @@ def protected(monkeypatch):
         "signer",
         URLSafeTimedSerializer("test-secret-which-is-long-enough-12345", salt="leadflow-v1"),
     )
-    main.login_attempts.clear()
 
 
 def test_auth_login_logout_and_tampered_cookie(client, protected):

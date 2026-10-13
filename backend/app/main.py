@@ -1,9 +1,7 @@
 import hashlib
 import hmac
 import logging
-import time
-from collections import defaultdict, deque
-from threading import Lock
+import os
 from typing import Annotated, Literal
 from urllib.parse import urlparse
 from uuid import UUID, uuid4
@@ -23,6 +21,7 @@ from app.downloads import calendar_reminder, leads_csv
 from app.lead_queries import day_bounds as day_bounds
 from app.lead_queries import decorate, filtered_predicates, query_leads
 from app.models import Discussion, Lead
+from app.rate_limit import reserve_login_attempt, reset_login_attempts
 from app.schemas import (
     DiscussionCreate,
     DiscussionOut,
@@ -53,8 +52,6 @@ signer = URLSafeTimedSerializer(
 )
 # A password rotation invalidates outstanding sessions.
 password_version = hashlib.sha256(settings.app_password.encode()).hexdigest()
-login_attempts: dict[str, deque] = defaultdict(deque)
-attempts_lock = Lock()
 app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=[
@@ -63,6 +60,8 @@ app.add_middleware(
         "127.0.0.1",
         "api",
         "testserver",
+        *([settings.api_hostname] if settings.api_hostname else []),
+        *([os.environ["VERCEL_URL"]] if os.environ.get("VERCEL_URL") else []),
     ],
 )
 
@@ -149,30 +148,13 @@ def session(request: Request):
 
 
 @app.post("/api/auth/login")
-def login(payload: Login, request: Request, response: Response):
+def login(payload: Login, request: Request, response: Response, db: Db):
     if not settings.app_password:
         return {"authenticated": True}
-    now = time.monotonic()
-    # Deliberately one API worker. See README before scaling; never trust forwarded IPs.
-    address = request.client.host if request.client else "unknown"
-    with attempts_lock:
-        for key in list(login_attempts):
-            if not login_attempts[key] or login_attempts[key][-1] <= now - 60:
-                del login_attempts[key]
-        attempts = login_attempts[address]
-        while attempts and attempts[0] <= now - 60:
-            attempts.popleft()
-        if len(attempts) >= 5:
-            raise HTTPException(
-                429,
-                "Too many sign-in attempts. Try again in one minute.",
-                headers={"Retry-After": "60"},
-            )
-        attempts.append(now)
+    reserve_login_attempt(db, utcnow())
     if not hmac.compare_digest(payload.password.encode(), settings.app_password.encode()):
         raise HTTPException(401, "Incorrect workspace password.")
-    with attempts_lock:
-        login_attempts.pop(address, None)
+    reset_login_attempts(db)
     response.set_cookie(
         COOKIE,
         signer.dumps({"v": password_version}),

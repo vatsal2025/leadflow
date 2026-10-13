@@ -20,6 +20,13 @@ from app.db import Base, UTCDateTime, utcnow
 STATUSES = ("New", "Contacted", "Qualified", "Proposal Sent", "Won", "Lost")
 
 
+class LoginWindow(Base):
+    __tablename__ = "login_windows"
+    key: Mapped[str] = mapped_column(String(40), primary_key=True)
+    started_at: Mapped[datetime] = mapped_column(UTCDateTime())
+    attempts: Mapped[int] = mapped_column(Integer)
+
+
 class Lead(Base):
     __tablename__ = "leads"
     __table_args__ = (
