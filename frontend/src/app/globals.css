@@ -250,6 +250,7 @@
   color: #b33e39;
 }
 .pipeline-board {
+  position: relative;
   display: flex;
   gap: 14px;
   padding: 20px 24px 24px;

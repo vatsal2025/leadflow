@@ -261,3 +261,28 @@ test("pipeline loads beyond its first page and shows the full stage total", asyn
     lane.getByRole("button", { name: "Load more leads" }),
   ).toHaveCount(0);
 });
+
+test("the full pipeline scrolls inside its board without widening the viewport", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Pipeline", exact: true }).click();
+  await expect(
+    page
+      .getByRole("region", { name: "Lost stage", exact: true })
+      .getByRole("button", { name: "Open Kabir Sethi" }),
+  ).toBeAttached();
+  const viewport = page.viewportSize()!.width;
+  const measurements = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    document: document.documentElement.scrollWidth,
+    board: document.querySelector(".pipeline-board")!.clientWidth,
+    contents: document.querySelector(".pipeline-board")!.scrollWidth,
+  }));
+  expect(measurements.viewport).toBe(viewport);
+  expect(measurements.document).toBeLessThanOrEqual(viewport);
+  expect(measurements.contents).toBeGreaterThan(measurements.board);
+  const lost = page.getByRole("region", { name: "Lost stage", exact: true });
+  await lost.getByRole("button", { name: "Open Kabir Sethi" }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+});
